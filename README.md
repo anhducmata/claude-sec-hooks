@@ -3,7 +3,7 @@
 <img width="1522" height="282" alt="image" src="https://github.com/user-attachments/assets/630a7229-d214-45a2-a889-0ac003d59224" />
 
 
-# claude-sec-hoooks
+# claude-sec-hooks
 
 A `PreToolUse` hook for [Claude Code](https://claude.com/claude-code) that classifies the
 risk of every `Bash` command *before* it runs, and shows a color-coded severity + plain-English
