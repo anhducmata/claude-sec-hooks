@@ -1,6 +1,6 @@
 {
   "name": "claude-sec-hooks",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "PreToolUse hook for Claude Code: local, deterministic risk classification for Bash commands with color-coded severity and confirmation gating",
   "main": "lib/index.js",
   "bin": {
