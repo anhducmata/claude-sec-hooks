@@ -65,7 +65,7 @@ async function runHook() {
     process.exit(0);
   }
   const cmd = payload?.tool_input?.command || '';
-  const lang = process.env.CLAUDE_HOOK_LANG || readConfig().lang;
+  const lang = readConfig().lang || process.env.CLAUDE_HOOK_LANG;
   const output = checkCommand(cmd, { lang });
   if (output) {
     process.stdout.write(JSON.stringify(output) + '\n');
