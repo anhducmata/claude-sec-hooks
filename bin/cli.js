@@ -6,6 +6,43 @@ const os = require('os');
 const path = require('path');
 const { checkCommand } = require('../lib');
 
+const CONFIG_PATH = path.join(os.homedir(), '.claude', 'claude-sec-hooks.json');
+const SUPPORTED_LANGS = ['en', 'vi'];
+
+function readConfig() {
+  try {
+    return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+  } catch {
+    return {};
+  }
+}
+
+function writeConfig(config) {
+  fs.mkdirSync(path.dirname(CONFIG_PATH), { recursive: true });
+  fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2) + '\n');
+}
+
+function runLang() {
+  const requested = process.argv[3]?.trim().toLowerCase();
+  const config = readConfig();
+
+  if (!requested) {
+    console.log(`Current language: ${config.lang || 'en'} (default)`);
+    console.log(`Usage: claude-sec-hooks lang <${SUPPORTED_LANGS.join('|')}>`);
+    return;
+  }
+
+  if (!SUPPORTED_LANGS.includes(requested)) {
+    console.error(`Unsupported language: ${requested}`);
+    console.error(`Supported languages: ${SUPPORTED_LANGS.join(', ')}`);
+    process.exit(1);
+  }
+
+  config.lang = requested;
+  writeConfig(config);
+  console.log(`Language set to '${requested}'. Saved to ${CONFIG_PATH}`);
+}
+
 function readStdin() {
   return new Promise((resolve) => {
     let data = '';
@@ -28,7 +65,8 @@ async function runHook() {
     process.exit(0);
   }
   const cmd = payload?.tool_input?.command || '';
-  const output = checkCommand(cmd);
+  const lang = process.env.CLAUDE_HOOK_LANG || readConfig().lang;
+  const output = checkCommand(cmd, { lang });
   if (output) {
     process.stdout.write(JSON.stringify(output) + '\n');
   }
@@ -81,12 +119,16 @@ async function main() {
     runInstall();
     return;
   }
+  if (sub === 'lang') {
+    runLang();
+    return;
+  }
   if (sub === 'hook' || !sub) {
     await runHook();
     return;
   }
   console.error(`Unknown command: ${sub}`);
-  console.error('Usage: claude-sec-hooks <hook|install> [--project]');
+  console.error(`Usage: claude-sec-hooks <hook|install|lang> [--project|<${SUPPORTED_LANGS.join('|')}>]`);
   process.exit(1);
 }
 

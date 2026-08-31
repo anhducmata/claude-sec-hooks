@@ -51,9 +51,23 @@ patterns regardless of the source feeding the pipe (not just `curl`/`wget`).
 
 ## Language
 
-Explanations default to English. Set `CLAUDE_HOOK_LANG=vi` to get Vietnamese explanations
-instead — severity tags (`CRITICAL`/`HIGH`/`MEDIUM`/`LOW`) and the command text itself stay in
-English either way, since they're the compact, scannable part.
+Explanations default to English. Severity tags (`CRITICAL`/`HIGH`/`MEDIUM`/`LOW`) and the
+command text itself always stay in English, since they're the compact, scannable part.
+
+**npm / Node.js:**
+
+```bash
+npx claude-sec-hooks lang vi   # switch explanations to Vietnamese, persisted for future hook runs
+npx claude-sec-hooks lang en   # switch back to English
+npx claude-sec-hooks lang      # show the current language
+```
+
+This saves the choice to `~/.claude/claude-sec-hooks.json`, so it applies to every future
+`npx claude-sec-hooks hook` invocation without needing an env var exported in your shell profile.
+Setting `CLAUDE_HOOK_LANG` (e.g. `vi`) still works and takes priority over the saved config.
+
+**Python script:** set `CLAUDE_HOOK_LANG=vi` in the environment — there's no `lang` command for
+this variant since it has no CLI wrapper.
 
 ## Install
 
