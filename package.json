@@ -1,0 +1,32 @@
+{
+  "name": "claude-sec-hooks",
+  "version": "1.0.0",
+  "description": "PreToolUse hook for Claude Code: local, deterministic risk classification for Bash commands with color-coded severity and confirmation gating",
+  "main": "lib/index.js",
+  "bin": {
+    "claude-sec-hooks": "bin/cli.js"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "command-danger-check.py"
+  ],
+  "scripts": {
+    "test": "node --test test/index.test.js"
+  },
+  "keywords": [
+    "claude-code",
+    "hooks",
+    "security",
+    "bash",
+    "cli-safety"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anhducmata/Claude-Sec-Hooks.git"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
