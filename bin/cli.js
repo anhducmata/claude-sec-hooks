@@ -113,10 +113,65 @@ function runInstall() {
   console.log('Restart Claude Code (or start a new session) for it to take effect.');
 }
 
+function runUninstall() {
+  const target = process.argv.includes('--project')
+    ? path.join(process.cwd(), '.claude', 'settings.json')
+    : path.join(os.homedir(), '.claude', 'settings.json');
+
+  if (!fs.existsSync(target)) {
+    console.log(`No settings file found at ${target}`);
+    return;
+  }
+
+  let settings;
+  try {
+    settings = JSON.parse(fs.readFileSync(target, 'utf8'));
+  } catch (err) {
+    console.error(`Could not parse existing ${target}: ${err.message}`);
+    process.exit(1);
+  }
+
+  const command = 'npx claude-sec-hooks hook';
+  const preToolUse = settings.hooks?.PreToolUse;
+  if (!Array.isArray(preToolUse)) {
+    console.log(`Not installed in ${target}`);
+    return;
+  }
+
+  const filtered = preToolUse
+    .map((entry) => ({
+      ...entry,
+      hooks: (entry.hooks || []).filter((h) => h.command !== command),
+    }))
+    .filter((entry) => entry.hooks.length > 0);
+
+  if (filtered.length === preToolUse.length && filtered.every((e, i) => e.hooks.length === preToolUse[i].hooks.length)) {
+    console.log(`Not installed in ${target}`);
+    return;
+  }
+
+  if (filtered.length > 0) {
+    settings.hooks.PreToolUse = filtered;
+  } else {
+    delete settings.hooks.PreToolUse;
+    if (Object.keys(settings.hooks).length === 0) {
+      delete settings.hooks;
+    }
+  }
+
+  fs.writeFileSync(target, JSON.stringify(settings, null, 2) + '\n');
+  console.log(`Uninstalled PreToolUse:Bash hook from ${target}`);
+  console.log('Restart Claude Code (or start a new session) for it to take effect.');
+}
+
 async function main() {
   const sub = process.argv[2];
   if (sub === 'install') {
     runInstall();
+    return;
+  }
+  if (sub === 'uninstall') {
+    runUninstall();
     return;
   }
   if (sub === 'lang') {
@@ -128,7 +183,7 @@ async function main() {
     return;
   }
   console.error(`Unknown command: ${sub}`);
-  console.error(`Usage: claude-sec-hooks <hook|install|lang> [--project|<${SUPPORTED_LANGS.join('|')}>]`);
+  console.error(`Usage: claude-sec-hooks <hook|install|uninstall|lang> [--project|<${SUPPORTED_LANGS.join('|')}>]`);
   process.exit(1);
 }
 

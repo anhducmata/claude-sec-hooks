@@ -84,6 +84,13 @@ npx claude-sec-hooks install --project  # or into ./.claude/settings.json for on
 This adds a `PreToolUse:Bash` entry that runs `npx claude-sec-hooks hook`. Restart Claude Code
 (or start a new session) for it to take effect.
 
+To remove it again:
+
+```bash
+npx claude-sec-hooks uninstall            # removes the hook from ~/.claude/settings.json
+npx claude-sec-hooks uninstall --project  # or from ./.claude/settings.json
+```
+
 To run the checker directly (e.g. for testing):
 
 ```bash
