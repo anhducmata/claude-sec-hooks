@@ -1,3 +1,8 @@
+# Sample:
+
+<img width="1522" height="282" alt="image" src="https://github.com/user-attachments/assets/630a7229-d214-45a2-a889-0ac003d59224" />
+
+
 # Claude-Sec-Hooks
 
 A `PreToolUse` hook for [Claude Code](https://claude.com/claude-code) that classifies the
