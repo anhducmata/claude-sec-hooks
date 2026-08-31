@@ -191,6 +191,40 @@ VI_TRANSLATIONS = {
         "Xóa và cài lại node_modules — thường quy nhưng có thể mất thời gian",
     "Read-only command — no changes made to files or system state":
         "Lệnh chỉ đọc — không thay đổi file hay trạng thái hệ thống",
+
+    # AWS CLI
+    "Permanently deletes an entire S3 bucket and all objects in it":
+        "Xóa vĩnh viễn toàn bộ S3 bucket và mọi object bên trong",
+    "Permanently deletes an RDS database instance":
+        "Xóa vĩnh viễn một RDS database instance",
+    "Deletes an entire CloudFormation stack and every resource it manages":
+        "Xóa toàn bộ CloudFormation stack và mọi resource nó quản lý",
+    "Permanently deletes a DynamoDB table and all its data":
+        "Xóa vĩnh viễn một DynamoDB table và toàn bộ dữ liệu",
+    "Terminates EC2 instances — irreversible, the instance and its storage are destroyed":
+        "Terminate EC2 instance — không thể khôi phục, instance và storage của nó bị phá hủy",
+    "Bulk-deletes S3 objects — irreversible unless bucket versioning is enabled":
+        "Xóa hàng loạt object trên S3 — không thể khôi phục trừ khi bucket bật versioning",
+    "Permanently deletes an IAM user/role — can break running workloads or lock out access":
+        "Xóa vĩnh viễn IAM user/role — có thể làm hỏng workload đang chạy hoặc khóa quyền truy cập",
+    "Schedules deletion of a secret — dependent services lose access to it":
+        "Lên lịch xóa một secret — các service phụ thuộc sẽ mất quyền truy cập vào nó",
+    "Deletes a Lambda function — irreversible":
+        "Xóa một Lambda function — không thể khôi phục",
+    "Deletes an SSM parameter — can break anything reading it at runtime":
+        "Xóa một SSM parameter — có thể làm hỏng bất cứ thứ gì đọc nó lúc runtime",
+    "Stops or reboots EC2 instances — downtime for whatever runs on them":
+        "Dừng hoặc khởi động lại EC2 instance — gây downtime cho mọi thứ chạy trên đó",
+    "Changes IAM credentials or permissions — can grant/revoke access unexpectedly":
+        "Thay đổi IAM credentials hoặc quyền — có thể cấp/thu hồi quyền truy cập ngoài ý muốn",
+    "Creates/updates a CloudFormation stack — may create, modify, or replace real cloud resources":
+        "Tạo/cập nhật một CloudFormation stack — có thể tạo, sửa, hoặc thay resource cloud thật",
+    "Modifies RDS instance settings — may cause a reboot/downtime":
+        "Sửa cấu hình RDS instance — có thể gây reboot/downtime",
+    "Changes inbound firewall rules on a security group":
+        "Thay đổi inbound firewall rules trên một security group",
+    "Creates or overwrites an SSM parameter — may hold a secret":
+        "Tạo hoặc ghi đè một SSM parameter — có thể chứa secret",
 }
 
 
@@ -312,6 +346,14 @@ DANGER_PATTERNS = [
     (r"\bredis-cli\b.*\bFLUSH(ALL|DB)\b", "CRITICAL", "Wipes the entire Redis cache/store — all keys lost"),
     (r"\bdb\.dropDatabase\s*\(\s*\)", "CRITICAL", "Drops an entire MongoDB database and all its collections"),
 
+    # AWS CLI — highest-impact destructive actions. Overlaps by design with
+    # aws-safety-check.py's DANGER_EXACT list so this hook alone still catches
+    # them in any settings.json that hasn't also wired up the AWS-specific hook.
+    (r"\baws\s+s3api\s+delete-bucket\b", "CRITICAL", "Permanently deletes an entire S3 bucket and all objects in it"),
+    (r"\baws\s+rds\s+delete-db-instance\b", "CRITICAL", "Permanently deletes an RDS database instance"),
+    (r"\baws\s+cloudformation\s+delete-stack\b", "CRITICAL", "Deletes an entire CloudFormation stack and every resource it manages"),
+    (r"\baws\s+dynamodb\s+delete-table\b", "CRITICAL", "Permanently deletes a DynamoDB table and all its data"),
+
     # ════════════════════════════════════════════
     # HIGH — irreversible, or affects a live/shared system
     # ════════════════════════════════════════════
@@ -357,6 +399,14 @@ DANGER_PATTERNS = [
     (r"\bcrontab\s+-r\b", "HIGH", "Wipes all scheduled cron jobs with no confirmation and no backup"),
     (r"\biptables\s+-F\b|\bufw\s+(--force\s+)?(reset|disable)\b", "HIGH", "Flushes or disables firewall rules — opens up network exposure"),
     (r"\b(sudo\s+)?userdel\b", "HIGH", "Deletes a user account — irreversible, can lock out access"),
+
+    # AWS CLI
+    (r"\baws\s+ec2\s+terminate-instances\b", "HIGH", "Terminates EC2 instances — irreversible, the instance and its storage are destroyed"),
+    (r"\baws\s+s3\s+rm\b.*--recursive\b|\baws\s+s3api\s+delete-objects\b", "HIGH", "Bulk-deletes S3 objects — irreversible unless bucket versioning is enabled"),
+    (r"\baws\s+iam\s+delete-(user|role)\b", "HIGH", "Permanently deletes an IAM user/role — can break running workloads or lock out access"),
+    (r"\baws\s+secretsmanager\s+delete-secret\b", "HIGH", "Schedules deletion of a secret — dependent services lose access to it"),
+    (r"\baws\s+lambda\s+delete-function\b", "HIGH", "Deletes a Lambda function — irreversible"),
+    (r"\baws\s+ssm\s+delete-parameter\b", "HIGH", "Deletes an SSM parameter — can break anything reading it at runtime"),
 
     # ════════════════════════════════════════════
     # MEDIUM — alters state, usually recoverable
@@ -415,6 +465,14 @@ DANGER_PATTERNS = [
     (r"\bexport\s+\w*(SECRET|_KEY|API_KEY|TOKEN|PASSWORD)\w*=", "MEDIUM", "Sets a credential inline — visible in shell history and process list"),
     (r"\bhistory\s+-c\b|\bunset\s+HISTFILE\b", "MEDIUM", "Clears shell history — often used to hide what commands were run"),
 
+    # AWS CLI
+    (r"\baws\s+ec2\s+(stop|reboot)-instances\b", "MEDIUM", "Stops or reboots EC2 instances — downtime for whatever runs on them"),
+    (r"\baws\s+iam\s+(create|delete)-access-key\b|\baws\s+iam\s+(attach|detach)-role-policy\b", "MEDIUM", "Changes IAM credentials or permissions — can grant/revoke access unexpectedly"),
+    (r"\baws\s+cloudformation\s+(update|create)-stack\b", "MEDIUM", "Creates/updates a CloudFormation stack — may create, modify, or replace real cloud resources"),
+    (r"\baws\s+rds\s+modify-db-instance\b", "MEDIUM", "Modifies RDS instance settings — may cause a reboot/downtime"),
+    (r"\baws\s+ec2\s+(revoke|authorize)-security-group-ingress\b", "MEDIUM", "Changes inbound firewall rules on a security group"),
+    (r"\baws\s+ssm\s+put-parameter\b", "MEDIUM", "Creates or overwrites an SSM parameter — may hold a secret"),
+
     # ════════════════════════════════════════════
     # LOW — safe, read-only or trivially reversible
     # ════════════════════════════════════════════
@@ -426,15 +484,24 @@ SEVERITY_RANK = {"LOW": 0, "MEDIUM": 1, "HIGH": 2, "CRITICAL": 3}
 
 
 def split_segments(cmd: str):
-    """Split a compound command on top-level ; && || \\n, respecting quotes.
+    """Split a compound command on top-level ; && || \\n, respecting quotes
+    and paren depth.
 
     Deliberately does NOT split on a bare `|` — piping is itself part of what a
     step does (e.g. `curl ... | bash`), and the danger patterns need to see both
     sides of the pipe together to catch that.
+
+    Tracks `(`/`)` depth (covers both subshells `( ... )` and command
+    substitution `$( ... )`) so an operator INSIDE a nested group is never
+    treated as a top-level split point — e.g. `(cd /tmp && tar czf x .)` stays
+    one segment instead of being sliced mid-subshell into `(cd /tmp` and
+    `tar czf x .)`, which would otherwise scatter a dangerous command's
+    context across fragments and make it harder to match reliably.
     """
     segments = []
     current = []
     in_single = in_double = False
+    depth = 0
     i, n = 0, len(cmd)
     while i < n:
         c = cmd[i]
@@ -445,11 +512,17 @@ def split_segments(cmd: str):
             in_double = not in_double
             current.append(c)
         elif not in_single and not in_double:
-            if cmd[i:i + 2] in ("&&", "||"):
+            if c == "(":
+                depth += 1
+                current.append(c)
+            elif c == ")":
+                depth = max(0, depth - 1)
+                current.append(c)
+            elif depth == 0 and cmd[i:i + 2] in ("&&", "||"):
                 segments.append("".join(current))
                 current = []
                 i += 1  # consume both chars of the operator
-            elif c in (";", "\n"):
+            elif depth == 0 and c in (";", "\n"):
                 segments.append("".join(current))
                 current = []
             else:
